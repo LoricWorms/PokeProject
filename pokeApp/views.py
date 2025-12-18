@@ -4,19 +4,29 @@ from django.shortcuts import render
 # Create your views here.
 def index(request):
     response = requests.get('https://pokeapi.co/api/v2/pokemon?limit=1025')
-    pokemon_list = []
+    all_pokemon_list = []
     if response.status_code == 200:
         results = response.json()['results']
         for i, pokemon in enumerate(results):
-            pokemon_list.append({
+            all_pokemon_list.append({
                 'name': pokemon['name'],
                 'id': i + 1,
                 'image': f"https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/{i + 1}.png"
             })
     
+    search_query = request.GET.get('q')
+    if search_query:
+        pokemon_list = [
+            pokemon for pokemon in all_pokemon_list 
+            if search_query.lower() in pokemon['name'].lower()
+        ]
+    else:
+        pokemon_list = all_pokemon_list
+
     context = {
         'title' : 'Bienvenue sur mon Pokédex !',
-        'pokemon_list': pokemon_list
+        'pokemon_list': pokemon_list,
+        'search_query': search_query
     }
     return render(request, 'pokeApp/index.html', context)
 

@@ -9,6 +9,11 @@
 </head>
 <body>
 
+    <form method="GET" action="{% url 'index' %}">
+        <input type="text" name="q" placeholder="Rechercher un Pokémon..." value="{{ request.GET.q }}">
+        <button type="submit">Rechercher</button>
+    </form>
+
     <h1>{{ title }}</h1>
 
     <div id="pokedex">
