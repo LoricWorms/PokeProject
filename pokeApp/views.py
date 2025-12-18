@@ -1,4 +1,5 @@
 import requests
+import json
 from django.shortcuts import render
 
 # Create your views here.
@@ -35,6 +36,11 @@ def pokemon(request, id):
     poke_data = response.json()
     
     types = [t['type']['name'] for t in poke_data['types']]
+    
+    stats = {
+        'names': json.dumps([s['stat']['name'] for s in poke_data['stats']]),
+        'values': json.dumps([s['base_stat'] for s in poke_data['stats']])
+    }
 
     context = {
         'number' : poke_data['id'],
@@ -42,6 +48,7 @@ def pokemon(request, id):
         'type' : ', '.join(types),
         'height': poke_data['height'],
         'weight': poke_data['weight'],
-        'img' : poke_data['sprites']['front_default']
+        'img' : poke_data['sprites']['front_default'],
+        'stats': stats
     } 
     return render(request, 'pokeApp/pokemon.html', context)

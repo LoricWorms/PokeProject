@@ -1,10 +1,11 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ name|capfirst }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/pokemon.css' %}">
 </head>
 <body class="pokemon-detail-page">
@@ -18,9 +19,46 @@
             <p><strong>Height:</strong> {{ height }}</p>
             <p><strong>Weight:</strong> {{ weight }}</p>
         </div>
+        <div class="stats-container">
+            <canvas id="pokemonStatsChart"></canvas>
+        </div>
     </div>
     
-    <a href="{% url 'index' %}" class="back-link">Back to Pokédex</a>
+    <a href="{% url 'index' %}" class="back-link">Retour au Pokédex</a>
+
+    <script src="{% static 'js/chartjs/Chart.min.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('pokemonStatsChart').getContext('2d');
+            
+            const statNames = {{ stats.names|safe }};
+            const statValues = {{ stats.values|safe }};
+
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: statNames,
+                    datasets: [{
+                        label: 'Base Stats',
+                        data: statValues,
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        });
+    </script>
 
 </body>
 </html>
