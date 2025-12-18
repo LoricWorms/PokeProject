@@ -1,0 +1,84 @@
+/* General body style */
+body {
+    font-family: sans-serif;
+}
+
+/* Styles for the Pokédex (index.html) */
+#pokedex {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.pokemon-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    transition: box-shadow 0.3s;
+}
+
+.pokemon-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.pokemon-card a {
+    text-decoration: none;
+    color: black;
+}
+
+.pokemon-card h2 {
+    margin: 10px 0;
+    text-transform: capitalize;
+    font-size: 1.2em;
+}
+
+.pokemon-card img {
+    width: 120px;
+    height: 120px;
+}
+
+/* Styles for Pokémon details (pokemon.html) */
+.pokemon-detail-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    height: 90vh;
+}
+
+.pokemon-details-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    width: 300px;
+}
+
+.pokemon-details-card h1 {
+    text-transform: capitalize;
+}
+
+.pokemon-details-card img {
+    width: 150px;
+    height: 150px;
+    image-rendering: pixelated; /* For a retro pixel-art look */
+}
+
+.details {
+    text-align: left;
+    margin-top: 20px;
+}
+
+.details p {
+    margin: 5px 0;
+    text-transform: capitalize;
+}
+
+a {
+    margin-top: 20px;
+    text-decoration: none;
+    color: #007BFF;
+    font-weight: bold;
+}

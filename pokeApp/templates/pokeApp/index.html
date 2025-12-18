@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokédex</title>
+    <link rel="stylesheet" href="{% static 'css/pokemon.css' %}">
+</head>
+<body>
+
+    <h1>{{ title }}</h1>
+
+    <div id="pokedex">
+        {% for pokemon in pokemon_list %}
+        <div class="pokemon-card">
+            <a href="{% url 'pokemon' pokemon.id %}">
+                <img src="{{ pokemon.image }}" alt="{{ pokemon.name }}">
+                <h2>{{ pokemon.name }}</h2>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    
+</body>
+</html>
