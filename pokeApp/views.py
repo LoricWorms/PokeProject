@@ -46,7 +46,7 @@ def index(request):
     else:
         pokemon_list_filtered = all_pokemon_list
 
-    paginator = Paginator(pokemon_list_filtered, 24)  # 24 Pokémons par page
+    paginator = Paginator(pokemon_list_filtered, 25)  # 25 Pokémons par page
     page_number = request.GET.get('page')
     try:
         pokemon_page = paginator.get_page(page_number)
