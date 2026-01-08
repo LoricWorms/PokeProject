@@ -11,9 +11,17 @@
 </head>
 <body>
 
-    <form method="GET" action="{% url 'index' %}">
-        <input type="text" name="q" placeholder="Rechercher un Pokémon..." value="{{ request.GET.q }}">
-        <button type="submit">Rechercher</button>
+    <form id="filter-form" method="GET" action="{% url 'index' %}">
+        <input id="search-input" type="text" name="q" placeholder="Rechercher un Pokémon..." value="{{ search_query }}">
+        
+        <select id="generation-select" name="generation">
+            <option value="">Toutes les générations</option>
+            {% for generation in generations %}
+                <option value="{{ forloop.counter }}" {% if selected_generation == forloop.counter %}selected{% endif %}>
+                    Génération {{ forloop.counter }}
+                </option>
+            {% endfor %}
+        </select>
     </form>
 
     <h1>{{ title }}</h1>
@@ -28,6 +36,26 @@
         </div>
         {% endfor %}
     </div>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if pokemon_list.has_previous %}
+                <a href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_generation %}&generation={{ selected_generation }}{% endif %}">&laquo; première</a>
+                <a href="?page={{ pokemon_list.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_generation %}&generation={{ selected_generation }}{% endif %}">précédente</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ pokemon_list.number }} sur {{ pokemon_list.paginator.num_pages }}.
+            </span>
+
+            {% if pokemon_list.has_next %}
+                <a href="?page={{ pokemon_list.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_generation %}&generation={{ selected_generation }}{% endif %}">suivante</a>
+                <a href="?page={{ pokemon_list.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_generation %}&generation={{ selected_generation }}{% endif %}">dernière &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+    <script src="{% static 'js/poke_filter.js' %}"></script>
     
 </body>
 </html>
