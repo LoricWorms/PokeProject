@@ -1,31 +1,24 @@
+{% extends 'pokeApp/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ name|capfirst }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/pokemon.css' %}">
-</head>
-<body class="pokemon-detail-page">
 
+{% block content %}
     <div class="pokemon-details-card">
-        <h1>{{ name }}</h1>
-        <p>#{{ number }}</p>
+        <h1>{{ name|capfirst }}</h1>
+        <p class="pokemon-id">#{{ number }}</p>
         <img src="{{ img }}" alt="{{ name }}">
         <div class="details">
             <p><strong>Type:</strong> {{ type }}</p>
-            <p><strong>Height:</strong> {{ height }}</p>
-            <p><strong>Weight:</strong> {{ weight }}</p>
+            <p><strong>Taille:</strong> {{ height }}</p>
+            <p><strong>Poids:</strong> {{ weight }}</p>
         </div>
         <div class="stats-container">
             <canvas id="pokemonStatsChart"></canvas>
         </div>
+        <a href="{% url 'index' %}" class="back-link">Retour au Pokédex</a>
     </div>
-    
-    <a href="{% url 'index' %}" class="back-link">Retour au Pokédex</a>
+{% endblock %}
 
+{% block extra_js %}
     <script src="{% static 'js/chartjs/Chart.min.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -39,10 +32,24 @@
                 data: {
                     labels: statNames,
                     datasets: [{
-                        label: 'Base Stats',
+                        label: 'Statistiques de base',
                         data: statValues,
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)',
+                            'rgba(255, 159, 64, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
                         borderWidth: 1
                     }]
                 },
@@ -54,11 +61,14 @@
                         }
                     },
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
                 }
             });
         });
     </script>
-
-</body>
-</html>
+{% endblock %}

@@ -1,16 +1,7 @@
+{% extends 'pokeApp/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokédex</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/pokemon.css' %}">
-    <link rel="shortcut icon" type="image/png" href="{% static 'img/favicon.ico' %}">
-</head>
-<body>
 
+{% block content %}
     <form id="filter-form" method="GET" action="{% url 'index' %}">
         <input id="search-input" type="text" name="q" placeholder="Rechercher un Pokémon..." value="{{ search_query }}">
         
@@ -24,8 +15,6 @@
         </select>
     </form>
 
-    <h1>{{ title }}</h1>
-
     <div id="pokedex">
         {% for pokemon in pokemon_list %}
         <div class="pokemon-card">
@@ -34,9 +23,12 @@
                 <h2>{{ pokemon.name }}</h2>
             </a>
         </div>
+        {% empty %}
+            <p>Aucun Pokémon ne correspond à votre recherche.</p>
         {% endfor %}
     </div>
 
+    {% if pokemon_list %}
     <div class="pagination">
         <span class="step-links">
             {% if pokemon_list.has_previous %}
@@ -54,8 +46,9 @@
             {% endif %}
         </span>
     </div>
+    {% endif %}
+{% endblock %}
 
-    <script src="{% static 'js/poke_filter.js' %}"></script>
-    
-</body>
-</html>
+{% block extra_js %}
+<script src="{% static 'js/poke_filter.js' %}"></script>
+{% endblock %}
