@@ -1,5 +1,10 @@
 import requests
+from .models import Pokemon, Team
+from django.shortcuts import get_object_or_404, redirect
+from django.http import HttpResponse
 from django.shortcuts import render
+
+
 
 # Create your views here.
 def index(request):
@@ -35,3 +40,29 @@ def pokemon(request, id):
         'img' : poke_data['sprites']['front_default']
     } 
     return render(request, 'pokeApp/pokemon.html', context)
+
+
+def create_team(request):
+    team, created = Team.objects.get_or_create(name="Mon équipe")
+    return redirect('index')
+
+
+def add_to_team(request, pokemon_id):
+    team = Team.objects.get(name="Mon équipe")
+    pokemon = get_object_or_404(Pokemon, numero=pokemon_id)
+
+    if team.is_full():
+        return HttpResponse("Équipe complète (5 Pokémon max)")
+
+    team.pokemons.add(pokemon)
+    return redirect('pokemon', id=pokemon_id)
+
+
+def team_view(request):
+    team, created = Team.objects.get_or_create(name="Mon équipe")
+
+    context = {
+        'team': team,
+        'pokemons': team.pokemons.all()
+    }
+    return render(request, 'pokeApp/team.html', context)
