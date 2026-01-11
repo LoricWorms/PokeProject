@@ -1,6 +1,8 @@
 import requests
 import json
-from django.shortcuts import render
+import random
+
+from django.shortcuts import render , redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 # Create your views here.
@@ -85,3 +87,74 @@ def pokemon(request, id):
         'stats': stats
     } 
     return render(request, 'pokeApp/pokemon.html', context)
+
+def add_to_team(request, id):
+    team = request.session.get('team', [])
+
+    if id not in team and len(team) < 5:
+        team.append(id)
+        request.session['team'] = team
+
+    return redirect('pokemon', id=id)
+
+
+def remove_from_team(request, id):
+    team = request.session.get('team', [])
+
+    if id in team:
+        team.remove(id)
+        request.session['team'] = team
+
+    return redirect('team')
+
+
+def team_view(request):
+    team_ids = request.session.get('team', [])
+    team_pokemons = []
+
+    for pid in team_ids:
+        response = requests.get(f'https://pokeapi.co/api/v2/pokemon/{pid}/')
+        if response.status_code == 200:
+            data = response.json()
+            team_pokemons.append({
+                'id': data['id'],
+                'name': data['name'],
+                'image': data['sprites']['front_default'],
+                'hp': data['stats'][0]['base_stat'],
+                'attack': data['stats'][1]['base_stat'],
+                'defense': data['stats'][2]['base_stat'],
+            })
+
+    return render(request, 'pokeApp/team.html', {
+        'team': team_pokemons
+    })
+    
+def battle(request):
+    team_ids = request.session.get('team', [])
+    if len(team_ids) < 1:
+        return redirect('team')
+
+    # Équipe joueur
+    player = requests.get(f'https://pokeapi.co/api/v2/pokemon/{team_ids[0]}/').json()
+
+    # Pokémon IA random
+    enemy_id = random.randint(1, 251)
+    enemy = requests.get(f'https://pokeapi.co/api/v2/pokemon/{enemy_id}/').json()
+
+    player_hp = player['stats'][0]['base_stat']
+    enemy_hp = enemy['stats'][0]['base_stat']
+
+    if request.method == "POST":
+        damage = max(1, player['stats'][1]['base_stat'] - enemy['stats'][2]['base_stat'] // 2)
+        enemy_hp -= damage
+
+        if enemy_hp > 0:
+            damage_enemy = max(1, enemy['stats'][1]['base_stat'] - player['stats'][2]['base_stat'] // 2)
+            player_hp -= damage_enemy
+
+    return render(request, 'pokeApp/battle.html', {
+        'player': player,
+        'enemy': enemy,
+        'player_hp': player_hp,
+        'enemy_hp': enemy_hp
+    })

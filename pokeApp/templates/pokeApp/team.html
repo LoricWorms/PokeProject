@@ -1,0 +1,16 @@
+<h1>Mon équipe Pokémon</h1>
+
+{% if team %}
+    {% for p in team %}
+        <div>
+            <img src="{{ p.image }}">
+            <h3>{{ p.name }}</h3>
+            <p>HP: {{ p.hp }} | ATK: {{ p.attack }} | DEF: {{ p.defense }}</p>
+            <a href="{% url 'remove_from_team' p.id %}">❌ Retirer</a>
+        </div>
+    {% endfor %}
+{% else %}
+    <p>Aucun Pokémon dans l'équipe.</p>
+{% endif %}
+
+<a href="{% url 'index' %}">⬅ Retour au Pokédex</a>
