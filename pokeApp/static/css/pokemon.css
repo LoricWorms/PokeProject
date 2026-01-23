@@ -390,3 +390,34 @@ a:hover {
     justify-content: center;
     gap: 20px;
 }
+
+
+.messages-container { 
+    max-width: 1200px; 
+    margin: 10px auto; 
+    padding: 0 20px; 
+}
+
+.alert { 
+    padding: 10px 14px; border-radius: 8px; 
+    margin-bottom: 10px; 
+    font-weight: 600; 
+}
+
+.alert-success { 
+    background: #e6f7ea; 
+    color: #1b7a3a; 
+    border: 1px solid rgba(27,122,58,0.12); 
+}
+
+.alert-error { 
+    background: #fdecea;
+    color: #a12b2b; 
+    border: 1px solid rgba(161,43,43,0.12); 
+}
+
+.alert-info { 
+    background: #e8f4ff; 
+    color: #1f6fb8; 
+    border: 1px solid rgba(31,111,184,0.12); 
+}

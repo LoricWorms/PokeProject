@@ -4,6 +4,7 @@ import random
 
 from django.shortcuts import render , redirect
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib import messages
 
 # Create your views here.
 def index(request):
@@ -93,15 +94,21 @@ def pokemon(request, id):
     } 
     return render(request, 'pokeApp/pokemon.html', context)
 
-def add_to_team(request, id):
-    team = request.session.get('team', [])
-
-    if id not in team and len(team) < 5:
-        team.append(id)
-        request.session['team'] = team
-
+def add_to_team(request, id): 
+    team = request.session.get('team', []) 
+     
+    if id in team: 
+        messages.info(request, "Ce Pokémon est déjà dans votre équipe.") 
+        return redirect('team')
+    
+    if len(team) >= 6: 
+        messages.error(request, "Votre équipe contient déjà 6 Pokémon. Retirez-en un avant d'en ajouter un autre.") 
+        return redirect('pokemon', id=id)  
+    
+    team.append(id) 
+    request.session['team'] = team 
+    messages.success(request, "Pokémon ajouté à l'équipe.") 
     return redirect('team')
-
 
 def remove_from_team(request, id):
     team = request.session.get('team', [])
