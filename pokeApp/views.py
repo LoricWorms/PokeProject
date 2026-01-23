@@ -146,8 +146,10 @@ def team_view(request):
     
 def battle(request):
     
-    if request.method == "GET" and 'battle' in request.session: 
+    # en haut de la vue battle
+    if request.method == "GET" and request.GET.get('new') == '1' and 'battle' in request.session:
         del request.session['battle']
+
 
     if 'team' not in request.session or not request.session['team']:
         return redirect('team')
@@ -164,6 +166,7 @@ def battle(request):
                 'max_hp': p['stats'][0]['base_stat'],
                 'attack': p['stats'][1]['base_stat'],
                 'defense': p['stats'][2]['base_stat'],
+                'speed': p['stats'][5]['base_stat'],
                 'image': p['sprites']['front_default'],
                 'alive': True,
                 'attacks': [
@@ -182,6 +185,7 @@ def battle(request):
                 'max_hp': e['stats'][0]['base_stat'],
                 'attack': e['stats'][1]['base_stat'],
                 'defense': e['stats'][2]['base_stat'],
+                'speed': e['stats'][5]['base_stat'],
                 'image': e['sprites']['front_default'],
                 'alive': True
             })
@@ -192,7 +196,8 @@ def battle(request):
             'player_current': 0,
             'enemy_current': 0,
             'message': '',
-            'combat_fini': False,  
+            'combat_fini': False, 
+            'log': [] 
         }
 
     battle = request.session['battle']
@@ -223,41 +228,125 @@ def battle(request):
             # empêcher un Pokémon KO d’attaquer
             if not player['alive'] or player['hp'] <= 0:
                 battle['message'] = f"{player['name']} est KO et ne peut pas attaquer."
+                # on peut aussi logguer la tentative
+                battle.setdefault('log', []).append({'event': f"{player['name']} a tenté d'attaquer mais est KO."})
             elif not enemy['alive'] or enemy['hp'] <= 0:
                 battle['message'] = f"{enemy['name']} est déjà KO."
+                battle.setdefault('log', []).append({'event': f"{enemy['name']} est déjà KO."})
             else:
-                #dégats
                 power = int(request.POST['attack'])
-                
-                dmg = max(1, power + player['attack'] - enemy['defense'] // 2)
-                enemy['hp'] = max(0, enemy['hp'] - dmg)
-                battle['message'] = f"{player['name']} attaque ({dmg} dégâts)"
 
-                if enemy['hp'] <= 0:
-                    enemy['alive'] = False
-                    battle['message'] += f" → {enemy['name']} est KO"
+                # déterminer l'ordre par speed (plus rapide joue en premier)
+                player_first = player.get('speed', 0) >= enemy.get('speed', 0)
 
-                    # chercher un nouvel ennemi vivant, parmi la liste
-                    for i, e in enumerate(battle['enemy_team']):
-                        if e['alive']:
-                            battle['enemy_current'] = i
-                            enemy = battle['enemy_team'][i]
-                            break
+                # helper pour appliquer une attaque (retourne dégâts infligés)
+                def apply_attack(attacker, defender, power_value):
+                    dmg = max(1, power_value + attacker.get('attack', 0) - defender.get('defense', 0) // 2)
+                    defender['hp'] = max(0, defender['hp'] - dmg)
+                    return dmg
+
+                # choisir une attaque ennemie (simple IA : attaque aléatoire parmi ses attaques)
+                if enemy.get('attacks'):
+                    enemy_attack = random.choice(enemy['attacks'])
+                    enemy_power = enemy_attack.get('power', enemy.get('attack', 5))
+                    enemy_move_name = enemy_attack.get('name', 'attaque')
                 else:
-                    # riposte de l’ennemi uniquement s’il est encore vivant
-                    dmg_enemy = max(1, enemy['attack'] - player['defense'] // 2)
-                    player['hp'] = max(0, player['hp'] - dmg_enemy)
+                    enemy_power = enemy.get('attack', 5)
+                    enemy_move_name = 'attaque'
+
+                # s'assurer que le log existe
+                battle.setdefault('log', [])
+
+                # Exécution selon l'ordre, en ajoutant des entrées dans le log
+                if player_first:
+                    # joueur attaque en premier
+                    dmg = apply_attack(player, enemy, power)
+                    battle['message'] = f"{player['name']} attaque ({dmg} dégâts)"
+                    battle['log'].append({
+                        'actor': player['name'],
+                        'target': enemy['name'],
+                        'move': f"{power} power",
+                        'damage': dmg,
+                        'actor_side': 'player'
+                    })
+
+                    if enemy['hp'] <= 0:
+                        enemy['alive'] = False
+                        battle['log'].append({'event': f"{enemy['name']} est KO"})
+                        battle['message'] += f" → {enemy['name']} est KO"
+                        # chercher un nouvel ennemi vivant si nécessaire
+                        for i, e in enumerate(battle['enemy_team']):
+                            if e['alive']:
+                                battle['enemy_current'] = i
+                                enemy = battle['enemy_team'][i]
+                                break
+                    else:
+                        # riposte ennemie
+                        dmg2 = apply_attack(enemy, player, enemy_power)
+                        battle['log'].append({
+                            'actor': enemy['name'],
+                            'target': player['name'],
+                            'move': f"{enemy_move_name} ({enemy_power})",
+                            'damage': dmg2,
+                            'actor_side': 'enemy'
+                        })
+                        battle['message'] += f" → {enemy['name']} riposte ({dmg2} dégâts)"
+
+                        if player['hp'] <= 0:
+                            player['alive'] = False
+                            battle['log'].append({'event': f"{player['name']} est KO"})
+                            battle['message'] += f" → {player['name']} est KO"
+                            # chercher un nouveau Pokémon vivant côté joueur
+                            for i, p in enumerate(battle['player_team']):
+                                if p['alive']:
+                                    battle['player_current'] = i
+                                    player = battle['player_team'][i]
+                                    break
+                else:
+                    # ennemi commence
+                    dmg = apply_attack(enemy, player, enemy_power)
+                    battle['message'] = f"{enemy['name']} attaque ({dmg} dégâts)"
+                    battle['log'].append({
+                        'actor': enemy['name'],
+                        'target': player['name'],
+                        'move': f"{enemy_move_name} ({enemy_power})",
+                        'damage': dmg,
+                        'actor_side': 'enemy'
+                    })
 
                     if player['hp'] <= 0:
                         player['alive'] = False
+                        battle['log'].append({'event': f"{player['name']} est KO"})
                         battle['message'] += f" → {player['name']} est KO"
-
-                        # chercher un nouveau Pokémon vivant côté joueur
                         for i, p in enumerate(battle['player_team']):
                             if p['alive']:
                                 battle['player_current'] = i
                                 player = battle['player_team'][i]
                                 break
+                    else:
+                        # contre-attaque du joueur
+                        dmg2 = apply_attack(player, enemy, power)
+                        battle['log'].append({
+                            'actor': player['name'],
+                            'target': enemy['name'],
+                            'move': f"{power} power",
+                            'damage': dmg2,
+                            'actor_side': 'player'
+                        })
+                        battle['message'] += f" → {player['name']} contre‑attaque ({dmg2} dégâts)"
+
+                        if enemy['hp'] <= 0:
+                            enemy['alive'] = False
+                            battle['log'].append({'event': f"{enemy['name']} est KO"})
+                            battle['message'] += f" → {enemy['name']} est KO"
+                            for i, e in enumerate(battle['enemy_team']):
+                                if e['alive']:
+                                    battle['enemy_current'] = i
+                                    enemy = battle['enemy_team'][i]
+                                    break
+
+                # limiter la taille du log (garder les 30 dernières entrées)
+                battle['log'] = battle['log'][-30:]
 
         
         if not any(p['alive'] for p in battle['player_team']):
@@ -270,17 +359,18 @@ def battle(request):
     request.session['battle'] = battle
     
     # Calcul des pourcentages pr la barre de vie
-    player['hp_percent'] = int((player['hp'] / player['max_hp']) * 100)
-    enemy['hp_percent'] = int((enemy['hp'] / enemy['max_hp']) * 100)
-
+   
+    player['hp_percent'] = int((player['hp'] / player['max_hp']) * 100) if player['max_hp'] else 0
+    enemy['hp_percent'] = int((enemy['hp'] / enemy['max_hp']) * 100) if enemy['max_hp'] else 0
     for p in battle['player_team']:
-        p['hp_percent'] = int((p['hp'] / p['max_hp']) * 100)
-
+        p['hp_percent'] = int((p['hp'] / p['max_hp']) * 100) if p['max_hp'] else 0
     for e in battle['enemy_team']:
-        e['hp_percent'] = int((e['hp'] / e['max_hp']) * 100)
+        e['hp_percent'] = int((e['hp'] / e['max_hp']) * 100) if e['max_hp'] else 0
+
 
 
     return render(request, 'pokeApp/battle.html', {
+        'battle': battle,
         'player': player,
         'enemy': enemy,
         'player_team': battle['player_team'],

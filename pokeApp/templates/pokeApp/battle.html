@@ -4,7 +4,7 @@
 {% block content %}
 
 <div class="battle-wrapper">
-
+  
     <h1>Combat Pokémon</h1>
 
     <div class="battle-grid">
@@ -100,6 +100,28 @@
         </div>
 
     </div>
+  
+    <div class="battle-log"> 
+        <h3>Journal de combat</h3> 
+        <div class="battle-log-entries"> 
+            {% for entry in battle.log %} 
+            {% if entry.event %} 
+            <div class="log-event">
+                {{ entry.event }}
+            </div> 
+                {% else %} 
+                <div class="log-entry {{ entry.actor_side }}"> 
+                    <span class="log-actor">{{ entry.actor }}
+                    </span> 
+                    <span class="log-action">→</span> 
+                    <span class="log-target">{{ entry.target }}</span> 
+                    <span class="log-damage">(-{{ entry.damage }})</span> 
+                    <span class="log-move">[{{ entry.move }}]</span> 
+                </div> 
+                {% endif %} 
+                {% endfor %} 
+            </div> 
+        </div>
 
     <p class="battle-message">{{ message }}</p>
 
@@ -114,7 +136,7 @@
   <div class="modal-content">
     <h2>{{ message }}</h2>
     <div class="modal-actions">
-      <a href="{% url 'battle' %}" class="back-link replay">Rejouer</a>
+      <a href="{% url 'battle' %}?new=1" class="back-link replay">Rejouer</a>
       <a href="{% url 'team' %}" class="back-link">Voir l'équipe</a>
     </div>
   </div>
