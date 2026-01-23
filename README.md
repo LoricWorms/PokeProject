@@ -1,5 +1,7 @@
-# PokeProject
-pokédex en Python en python utilisant l'API https://pokeapi.co
+# PokeApp
+pokédex en Python en python utilisant l'API https://pokeapi.co,
+
+## **Bien se baser sur le code de PokeApp (L'application). PokeProject contient le code Django.**
 
 # Pokédex Combat
 
