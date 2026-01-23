@@ -27,6 +27,28 @@
         </form>
     {% endif %}
 
+    <h2>Votre équipe</h2>
+        <div id="pokedex">
+            {% for p in player_team %}
+                <div class="pokemon-card {% if not p.alive %}ko{% endif %}">
+                <img src="{{ p.image }}">
+                <p>{{ p.name }}</p>
+                <p>HP {{ p.hp }}/{{ p.max_hp }}</p>
+            {% if p.alive %}
+        <form method="post">
+            {% csrf_token %}
+            <button name="switch" value="{{ forloop.counter0 }}">
+                Échanger
+            </button>
+        </form>
+            {% else %}
+                <p>KO</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+
     <a href="{% url 'team' %}" class="back-link">
          Retour équipe
     </a>

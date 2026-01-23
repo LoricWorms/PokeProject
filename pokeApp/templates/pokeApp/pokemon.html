@@ -14,7 +14,11 @@
         <div class="stats-container">
             <canvas id="pokemonStatsChart"></canvas>
         </div>
-        <a href="{% url 'add_to_team' number %}" class="back-link"> Ajouter à l'équipe </a>
+        {% if in_team %}
+            <a href="{% url 'remove_from_team' number %}" class="back-link"> Retirer de l'équipe</a>
+        {% else %}
+            <a href="{% url 'add_to_team' number %}" class="back-link"> Ajouter à l'équipe</a>
+        {% endif %}
         <a href="{% url 'index' %}" class="back-link">Retour au Pokédex</a>
     </div>
 {% endblock %}

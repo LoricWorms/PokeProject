@@ -72,6 +72,10 @@ def pokemon(request, id):
     
     types = [t['type']['name'] for t in poke_data['types']]
     
+    
+    team = request.session.get('team', [])
+    in_team = id in team
+    
     stats = {
         'names': json.dumps([s['stat']['name'] for s in poke_data['stats']]),
         'values': json.dumps([s['base_stat'] for s in poke_data['stats']])
@@ -84,7 +88,8 @@ def pokemon(request, id):
         'height': poke_data['height'],
         'weight': poke_data['weight'],
         'img' : poke_data['sprites']['front_default'],
-        'stats': stats
+        'stats': stats,
+        'in_team': in_team
     } 
     return render(request, 'pokeApp/pokemon.html', context)
 
@@ -95,7 +100,7 @@ def add_to_team(request, id):
         team.append(id)
         request.session['team'] = team
 
-    return redirect('pokemon', id=id)
+    return redirect('team')
 
 
 def remove_from_team(request, id):
@@ -130,89 +135,106 @@ def team_view(request):
     })
     
 def battle(request):
-    team_ids = request.session.get('team', [])
+    
+    if 'battle' in request.session:
+        del request.session['battle']
 
-    if not team_ids:
+    if 'team' not in request.session or not request.session['team']:
         return redirect('team')
 
-    # Initialisation combat
+    # initialisation du combat
     if 'battle' not in request.session:
         player_team = []
-        for pid in team_ids:
-            data = requests.get(f'https://pokeapi.co/api/v2/pokemon/{pid}/').json()
+        for pid in request.session['team']:
+            p = requests.get(f'https://pokeapi.co/api/v2/pokemon/{pid}/').json()
             player_team.append({
                 'id': pid,
-                'name': data['name'],
-                'hp': data['stats'][0]['base_stat'],
-                'max_hp': data['stats'][0]['base_stat'],
-                'attack': data['stats'][1]['base_stat'],
-                'defense': data['stats'][2]['base_stat'],
-                'image': data['sprites']['front_default'],
+                'name': p['name'],
+                'hp': p['stats'][0]['base_stat'],
+                'max_hp': p['stats'][0]['base_stat'],
+                'attack': p['stats'][1]['base_stat'],
+                'defense': p['stats'][2]['base_stat'],
+                'image': p['sprites']['front_default'],
                 'alive': True,
                 'attacks': [
                     {'name': m['move']['name'], 'power': random.randint(10, 25)}
-                    for m in data['moves'][:3]
+                    for m in p['moves'][:4]
                 ]
             })
 
-        enemy_id = random.randint(1, 251)
-        enemy_data = requests.get(f'https://pokeapi.co/api/v2/pokemon/{enemy_id}/').json()
+        enemy_team = []
+        for _ in range(len(player_team)):
+            eid = random.randint(1, 251)
+            e = requests.get(f'https://pokeapi.co/api/v2/pokemon/{eid}/').json()
+            enemy_team.append({
+                'name': e['name'],
+                'hp': e['stats'][0]['base_stat'],
+                'max_hp': e['stats'][0]['base_stat'],
+                'attack': e['stats'][1]['base_stat'],
+                'defense': e['stats'][2]['base_stat'],
+                'image': e['sprites']['front_default'],
+                'alive': True
+            })
 
         request.session['battle'] = {
             'player_team': player_team,
-            'current': 0,
-            'enemy': {
-                'name': enemy_data['name'],
-                'hp': enemy_data['stats'][0]['base_stat'],
-                'attack': enemy_data['stats'][1]['base_stat'],
-                'defense': enemy_data['stats'][2]['base_stat'],
-                'image': enemy_data['sprites']['front_default']
-            },
+            'enemy_team': enemy_team,
+            'player_current': 0,
+            'enemy_current': 0,
             'message': ''
         }
 
     battle = request.session['battle']
-    current = battle['current']
-    player = battle['player_team'][current]
-    enemy = battle['enemy']
+    player = battle['player_team'][battle['player_current']]
+    enemy = battle['enemy_team'][battle['enemy_current']]
 
-    combat_fini = False
+    # changer de Pokémon
+    if request.method == "POST" and 'switch' in request.POST:
+        idx = int(request.POST['switch'])
+        if battle['player_team'][idx]['alive']:
+            battle['player_current'] = idx
 
-    if request.method == "POST" and player['alive']:
-        power = int(request.POST['attack'])
-        dmg = max(1, power + player['attack'] - enemy['defense'] // 2)
+    # atk
+    elif request.method == "POST" and 'attack' in request.POST:
+        dmg = int(request.POST['attack']) + player['attack'] - enemy['defense'] // 2
+        dmg = max(1, dmg)
         enemy['hp'] -= dmg
-        battle['message'] = f"{player['name']} inflige {dmg} dégâts !"
+        battle['message'] = f"{player['name']} attaque ({dmg} dégâts)"
 
         if enemy['hp'] <= 0:
-            battle['message'] += " Ennemi vaincu !"
-            combat_fini = True
+            enemy['alive'] = False
+            battle['message'] += f" → {enemy['name']} est KO"
 
+            for i, e in enumerate(battle['enemy_team']):
+                if e['alive']:
+                    battle['enemy_current'] = i
+                    break
         else:
             dmg_enemy = max(1, enemy['attack'] - player['defense'] // 2)
             player['hp'] -= dmg_enemy
 
             if player['hp'] <= 0:
                 player['alive'] = False
-                battle['message'] += f" {player['name']} est KO !"
+                battle['message'] += f" → {player['name']} est KO"
 
-                # chercher leprochain Pokémon vivant
                 for i, p in enumerate(battle['player_team']):
                     if p['alive']:
-                        battle['current'] = i
+                        battle['player_current'] = i
                         break
-                else:
-                    battle['message'] += " Défaite !"
-                    combat_fini = True
+
+    # fin du combat
+    if not any(p['alive'] for p in battle['player_team']):
+        battle['message'] = " Défaite !"
+    elif not any(e['alive'] for e in battle['enemy_team']):
+        battle['message'] = " Victoire !"
 
     request.session['battle'] = battle
 
     return render(request, 'pokeApp/battle.html', {
         'player': player,
         'enemy': enemy,
-        'player_hp': player['hp'],
-        'enemy_hp': enemy['hp'],
+        'player_team': battle['player_team'],
+        'enemy_team': battle['enemy_team'],
         'attacks': player['attacks'],
-        'message': battle['message'],
-        'combat_fini': combat_fini
+        'message': battle['message']
     })
