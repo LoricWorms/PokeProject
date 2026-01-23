@@ -136,7 +136,7 @@ def team_view(request):
     
 def battle(request):
     
-    if 'battle' in request.session:
+    if request.method == "GET" and 'battle' in request.session: 
         del request.session['battle']
 
     if 'team' not in request.session or not request.session['team']:
@@ -181,54 +181,94 @@ def battle(request):
             'enemy_team': enemy_team,
             'player_current': 0,
             'enemy_current': 0,
-            'message': ''
+            'message': '',
+            'combat_fini': False,  
         }
 
     battle = request.session['battle']
     player = battle['player_team'][battle['player_current']]
     enemy = battle['enemy_team'][battle['enemy_current']]
 
-    # changer de Pokémon
-    if request.method == "POST" and 'switch' in request.POST:
-        idx = int(request.POST['switch'])
-        if battle['player_team'][idx]['alive']:
-            battle['player_current'] = idx
-
-    # atk
-    elif request.method == "POST" and 'attack' in request.POST:
-        dmg = int(request.POST['attack']) + player['attack'] - enemy['defense'] // 2
-        dmg = max(1, dmg)
-        enemy['hp'] -= dmg
-        battle['message'] = f"{player['name']} attaque ({dmg} dégâts)"
-
-        if enemy['hp'] <= 0:
-            enemy['alive'] = False
-            battle['message'] += f" → {enemy['name']} est KO"
-
-            for i, e in enumerate(battle['enemy_team']):
-                if e['alive']:
-                    battle['enemy_current'] = i
-                    break
-        else:
-            dmg_enemy = max(1, enemy['attack'] - player['defense'] // 2)
-            player['hp'] -= dmg_enemy
-
-            if player['hp'] <= 0:
-                player['alive'] = False
-                battle['message'] += f" → {player['name']} est KO"
-
-                for i, p in enumerate(battle['player_team']):
-                    if p['alive']:
-                        battle['player_current'] = i
-                        break
-
-    # fin du combat
+    # Vérrif pour voir si le combat est déjà fini
     if not any(p['alive'] for p in battle['player_team']):
-        battle['message'] = " Défaite !"
+        battle['message'] = "Défaite : votre équipe est KO"
+        battle['combat_fini'] = True
     elif not any(e['alive'] for e in battle['enemy_team']):
-        battle['message'] = " Victoire !"
+        battle['message'] = "Victoire : équipe ennemie vaincue"
+        battle['combat_fini'] = True
+
+    # Si le combat est fini, on ne fait rien d'autre
+    if not battle.get('combat_fini', False):
+
+        # changer de Pokémon
+        if request.method == "POST" and 'switch' in request.POST:
+            idx = int(request.POST['switch'])
+            if battle['player_team'][idx]['alive']:
+                battle['player_current'] = idx
+                player = battle['player_team'][battle['player_current']]
+
+        # attaque
+        elif request.method == "POST" and 'attack' in request.POST:
+
+            # empêcher un Pokémon KO d’attaquer
+            if not player['alive'] or player['hp'] <= 0:
+                battle['message'] = f"{player['name']} est KO et ne peut pas attaquer."
+            elif not enemy['alive'] or enemy['hp'] <= 0:
+                battle['message'] = f"{enemy['name']} est déjà KO."
+            else:
+                #dégats
+                power = int(request.POST['attack'])
+                
+                dmg = max(1, power + player['attack'] - enemy['defense'] // 2)
+                enemy['hp'] = max(0, enemy['hp'] - dmg)
+                battle['message'] = f"{player['name']} attaque ({dmg} dégâts)"
+
+                if enemy['hp'] <= 0:
+                    enemy['alive'] = False
+                    battle['message'] += f" → {enemy['name']} est KO"
+
+                    # chercher un nouvel ennemi vivant, parmi la liste
+                    for i, e in enumerate(battle['enemy_team']):
+                        if e['alive']:
+                            battle['enemy_current'] = i
+                            enemy = battle['enemy_team'][i]
+                            break
+                else:
+                    # riposte de l’ennemi uniquement s’il est encore vivant
+                    dmg_enemy = max(1, enemy['attack'] - player['defense'] // 2)
+                    player['hp'] = max(0, player['hp'] - dmg_enemy)
+
+                    if player['hp'] <= 0:
+                        player['alive'] = False
+                        battle['message'] += f" → {player['name']} est KO"
+
+                        # chercher un nouveau Pokémon vivant côté joueur
+                        for i, p in enumerate(battle['player_team']):
+                            if p['alive']:
+                                battle['player_current'] = i
+                                player = battle['player_team'][i]
+                                break
+
+        
+        if not any(p['alive'] for p in battle['player_team']):
+            battle['message'] = "Défaite : votre équipe est KO"
+            battle['combat_fini'] = True
+        elif not any(e['alive'] for e in battle['enemy_team']):
+            battle['message'] = "Victoire : équipe ennemie vaincue"
+            battle['combat_fini'] = True
 
     request.session['battle'] = battle
+    
+    # Calcul des pourcentages pr la barre de vie
+    player['hp_percent'] = int((player['hp'] / player['max_hp']) * 100)
+    enemy['hp_percent'] = int((enemy['hp'] / enemy['max_hp']) * 100)
+
+    for p in battle['player_team']:
+        p['hp_percent'] = int((p['hp'] / p['max_hp']) * 100)
+
+    for e in battle['enemy_team']:
+        e['hp_percent'] = int((e['hp'] / e['max_hp']) * 100)
+
 
     return render(request, 'pokeApp/battle.html', {
         'player': player,
@@ -236,5 +276,9 @@ def battle(request):
         'player_team': battle['player_team'],
         'enemy_team': battle['enemy_team'],
         'attacks': player['attacks'],
-        'message': battle['message']
+        'message': battle['message'],
+        'combat_fini': battle.get('combat_fini', False),
+        'player_hp': player['hp'],
+        'enemy_hp': enemy['hp'],
     })
+

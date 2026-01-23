@@ -1,55 +1,114 @@
+{% extends 'pokeApp/base.html' %}
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/pokemon.css' %}">
 
-<div class="pokemon-details-card">
+{% block content %}
+
+<div class="battle-wrapper">
+
     <h1>Combat Pokémon</h1>
 
-    <h2>{{ player.name }} (HP : {{ player_hp }})</h2>
-    <img src="{{ player.image }}" alt="{{ player.name }}">
+    <div class="battle-grid">
 
-    <h3>VS</h3>
+        <div class="battle-side">
 
-    <h2>{{ enemy.name }} (HP : {{ enemy_hp }})</h2>
-    <img src="{{ enemy.image }}" alt="{{ enemy.name }}">
+            <div class="pokemon-card active-card">
+                <h2>{{ player.name }}</h2>
+                <img src="{{ player.image }}" alt="{{ player.name }}">
 
-    {% if message %}
-        <p><strong>{{ message }}</strong></p>
-    {% endif %}
+                <div class="hp-container">
+                    <div class="hp-bar">
+                        <div class="hp-fill" style="width: {{ player.hp_percent }}%;"></div>
+                    </div>
+                    <p>{{ player.hp }} / {{ player.max_hp }}</p>
+                </div>
+            </div>
 
-    {% if not combat_fini %}
-        <form method="post">
-            {% csrf_token %}
-            {% for attack in attacks %}
-                <button type="submit" name="attack" value="{{ attack.power }}">
-                    ⚔ {{ attack.name }}
-                </button>
-            {% endfor %}
-        </form>
-    {% endif %}
-
-    <h2>Votre équipe</h2>
-        <div id="pokedex">
-            {% for p in player_team %}
-                <div class="pokemon-card {% if not p.alive %}ko{% endif %}">
-                <img src="{{ p.image }}">
-                <p>{{ p.name }}</p>
-                <p>HP {{ p.hp }}/{{ p.max_hp }}</p>
-            {% if p.alive %}
-        <form method="post">
-            {% csrf_token %}
-            <button name="switch" value="{{ forloop.counter0 }}">
-                Échanger
-            </button>
-        </form>
-            {% else %}
-                <p>KO</p>
+            {% if not combat_fini %}
+            <div class="attack-panel">
+                <h3>Attaques</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    {% for attack in attacks %}
+                        <button class="attack-btn" type="submit" name="attack" value="{{ attack.power }}">
+                            ⚔ {{ attack.name }}
+                        </button>
+                    {% endfor %}
+                </form>
+            </div>
             {% endif %}
+
+            <h3>Votre équipe</h3>
+            <div class="team-grid">
+                {% for p in player_team %}
+                <div class="pokemon-card small-card {% if not p.alive %}ko{% endif %}">
+                    <img src="{{ p.image }}">
+                    <p>{{ p.name }}</p>
+
+                    <div class="hp-container small">
+                        <div class="hp-bar small">
+                            <div class="hp-fill" style="width: {{ p.hp_percent }}%;"></div>
+                        </div>
+                        <p>{{ p.hp }} / {{ p.max_hp }}</p>
+                    </div>
+
+                    {% if p.alive %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <button class="switch-btn" name="switch" value="{{ forloop.counter0 }}">
+                            Échanger
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
         </div>
-        {% endfor %}
+
+      
+        <div class="battle-side">
+
+            <div class="pokemon-card active-card enemy-card">
+                <h2>{{ enemy.name }}</h2>
+                <img src="{{ enemy.image }}" alt="{{ enemy.name }}">
+
+                <div class="hp-container">
+                    <div class="hp-bar">
+                        <div class="hp-fill enemy" style="width: {{ enemy.hp_percent }}%;"></div>
+                    </div>
+                    <p>{{ enemy.hp }} / {{ enemy.max_hp }}</p>
+                </div>
+            </div>
+
+            <h3>Équipe ennemie</h3>
+            <div class="team-grid">
+                {% for e in enemy_team %}
+                <div class="pokemon-card small-card {% if not e.alive %}ko{% endif %}">
+                    <img src="{{ e.image }}">
+                    <p>{{ e.name }}</p>
+
+                    <div class="hp-container small">
+                        <div class="hp-bar small">
+                           <div class="hp-fill enemy" style="width: {{ e.hp_percent }}%;"></div>
+                        </div>
+                        <p>{{ e.hp }} / {{ e.max_hp }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+
     </div>
 
+    <p class="battle-message">{{ message }}</p>
 
-    <a href="{% url 'team' %}" class="back-link">
-         Retour équipe
+    {% if combat_fini %}
+    <a href="{% url 'battle' %}" class="back-link" style="margin-top:20px; display:inline-block;">
+        Rejouer un combat
     </a>
+{% endif %}
+
 </div>
+
+{% endblock %}
