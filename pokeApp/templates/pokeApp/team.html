@@ -1,0 +1,34 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/pokemon.css' %}">
+
+<div class="pokemon-details-card">
+    <h1>Mon équipe Pokémon</h1>
+
+    {% if team %}
+        <div id="pokedex">
+            {% for p in team %}
+                <div class="pokemon-card">
+                    <img src="{{ p.image }}" alt="{{ p.name }}">
+                    <h2>{{ p.name }}</h2>
+                    <p> HP : {{ p.hp }}</p>
+                    <p> ATK : {{ p.attack }}</p>
+                    <p> DEF : {{ p.defense }}</p>
+
+                    <a href="{% url 'remove_from_team' p.id %}" class="back-link">
+                         Retirer
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>Aucun Pokémon dans l’équipe.</p>
+    {% endif %}
+
+    <a href="{% url 'battle' %}" class="back-link">
+        ⚔ Lancer un combat
+    </a>
+
+    <a href="{% url 'index' %}" class="back-link">
+        ⬅ Retour au Pokédex
+    </a>
+</div>

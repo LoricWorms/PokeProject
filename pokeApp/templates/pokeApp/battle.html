@@ -1,0 +1,33 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/pokemon.css' %}">
+
+<div class="pokemon-details-card">
+    <h1>Combat Pokémon</h1>
+
+    <h2>{{ player.name }} (HP : {{ player_hp }})</h2>
+    <img src="{{ player.sprites.front_default }}">
+
+    <h3>VS</h3>
+
+    <h2>{{ enemy.name }} (HP : {{ enemy_hp }})</h2>
+    <img src="{{ enemy.sprites.front_default }}">
+
+    {% if message %}
+        <p><strong>{{ message }}</strong></p>
+    {% endif %}
+
+    {% if not combat_fini %}
+        <form method="post">
+            {% csrf_token %}
+            {% for attack in attacks %}
+                <button type="submit" name="attack" value="{{ attack.power }}">
+                    ⚔ {{ attack.name }}
+                </button>
+            {% endfor %}
+        </form>
+    {% endif %}
+
+    <a href="{% url 'team' %}" class="back-link">
+        ⬅ Retour équipe
+    </a>
+</div>
