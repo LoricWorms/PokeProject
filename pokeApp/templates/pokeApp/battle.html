@@ -5,12 +5,12 @@
     <h1>Combat Pokémon</h1>
 
     <h2>{{ player.name }} (HP : {{ player_hp }})</h2>
-    <img src="{{ player.sprites.front_default }}">
+    <img src="{{ player.image }}" alt="{{ player.name }}">
 
     <h3>VS</h3>
 
     <h2>{{ enemy.name }} (HP : {{ enemy_hp }})</h2>
-    <img src="{{ enemy.sprites.front_default }}">
+    <img src="{{ enemy.image }}" alt="{{ enemy.name }}">
 
     {% if message %}
         <p><strong>{{ message }}</strong></p>
