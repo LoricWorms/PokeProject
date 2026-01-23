@@ -128,6 +128,9 @@ def team_view(request):
                 'hp': data['stats'][0]['base_stat'],
                 'attack': data['stats'][1]['base_stat'],
                 'defense': data['stats'][2]['base_stat'],
+                'attacks': [
+                     {'name': m['move']['name'], 'power': random.randint(10, 25)}
+                     for m in data['moves'][:4]]
             })
 
     return render(request, 'pokeApp/team.html', {

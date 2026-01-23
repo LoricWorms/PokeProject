@@ -1,21 +1,35 @@
+{% extends 'pokeApp/base.html' %}
 {% load static %}
-<link rel="stylesheet" href="{% static 'css/pokemon.css' %}">
+
+{% block content %}
 
 <div class="pokemon-details-card">
     <h1>Mon équipe Pokémon</h1>
 
     {% if team %}
-        <div id="pokedex">
+        <div class="team-grid">
             {% for p in team %}
-                <div class="pokemon-card">
+                <div class="pokemon-card team-card">
                     <img src="{{ p.image }}" alt="{{ p.name }}">
                     <h2>{{ p.name }}</h2>
-                    <p> HP : {{ p.hp }}</p>
-                    <p> ATK : {{ p.attack }}</p>
-                    <p> DEF : {{ p.defense }}</p>
 
-                    <a href="{% url 'remove_from_team' p.id %}" class="back-link">
-                         Retirer
+                    <p><strong>HP :</strong> {{ p.hp }}</p>
+                    <p><strong>ATK :</strong> {{ p.attack }}</p>
+                    <p><strong>DEF :</strong> {{ p.defense }}</p>
+
+                    {% if p.attacks %}
+                    <div class="attack-list">
+                        <h3>Attaques</h3>
+                        <ul>
+                            {% for atk in p.attacks %}
+                                <li>{{ atk.name }} ({{ atk.power }})</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <a href="{% url 'remove_from_team' p.id %}" class="back-link remove-btn">
+                        Retirer
                     </a>
                 </div>
             {% endfor %}
@@ -24,11 +38,15 @@
         <p>Aucun Pokémon dans l’équipe.</p>
     {% endif %}
 
-    <a href="{% url 'battle' %}" class="back-link">
-        Lancer un combat
-    </a>
+    <div class="team-actions">
+        <a href="{% url 'battle' %}" class="back-link">
+            Lancer un combat
+        </a>
 
-    <a href="{% url 'index' %}" class="back-link">
-        Retour au Pokédex
-    </a>
+        <a href="{% url 'index' %}" class="back-link">
+            Retour au Pokédex
+        </a>
+    </div>
 </div>
+
+{% endblock %}
