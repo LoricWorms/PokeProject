@@ -78,31 +78,31 @@ python manage.py migrate
 Copier‑coller les commandes suivantes pour démarrer le serveur de développement :
 
 # activer l'environnement si nécessaire
-# macOS / Linux
+- **macOS / Linux**
 source venv/bin/activate
-# Windows (PowerShell)
+- **Windows (PowerShell)**
 venv\Scripts\Activate.ps1
 
-# lancer le serveur de développement
+- **lancer le serveur de développement**
 python manage.py runserver
 
-# ouvrir dans le navigateur
-# http://127.0.0.1:8000/
+- **ouvrir dans le navigateur**
+ http://127.0.0.1:8000/
 
 ---
 
 ## Utilisation rapide
 
-# Parcourir le Pokédex : 
+- **Parcourir le Pokédex :**
 page d’accueil — recherche et filtrage par génération.
 
-# Voir une fiche : 
+- **Voir une fiche :** 
 cliquer sur un Pokémon pour consulter ses stats et son sprite.
 
-# Gérer l’équipe : 
+- **Gérer l’équipe :** 
 depuis la fiche, cliquer sur Ajouter (max 6). Voir la page Équipe pour gérer les membres.
 
-# Lancer un combat : 
+- **Lancer un combat :** 
 depuis la page Équipe, cliquer sur Lancer un combat. Choisir une attaque pour le Pokémon actif ; l’ordre d’action est déterminé par la stat speed. Le journal de combat (en haut) affiche chaque action. À la fin, un modal indique Victoire ou Défaite ; cliquer sur Rejouer pour recommencer.
 
 ---
